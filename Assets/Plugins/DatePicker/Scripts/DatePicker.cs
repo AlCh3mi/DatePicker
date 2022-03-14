@@ -34,6 +34,15 @@ namespace Plugins.DatePicker.Scripts
         
         public DateTime SelectedDate = DateTime.Today;
 
+        private void ClearDays()
+        {
+            while (dateObjectsParent.childCount > 0)
+            {
+                var currentObject = dateObjectsParent.GetChild(0).gameObject;
+                DestroyImmediate(currentObject);
+            }
+        }
+        
         private void PopulateYearList()
         {
             yearDropdown.ClearOptions();
@@ -66,6 +75,13 @@ namespace Plugins.DatePicker.Scripts
                 dateObject.name = date.ToString();
                 var selectedDate =  dateObject.GetComponent<SelectedDate>();
                 selectedDate.Setup(SelectedYear, SelectedMonth, date, borderColor, OnDateSelectedCallback);
+
+                var isSelectedDate = SelectedDate.Year == SelectedYear && 
+                                     SelectedDate.Month == SelectedMonth &&
+                                     SelectedDate.Day == date;
+                
+                if(isSelectedDate)
+                    selectedDate.SetSelected(true);
             }
 
             //spawn dudObject till the first day of the week (eg 6)
@@ -88,15 +104,6 @@ namespace Plugins.DatePicker.Scripts
             Repaint();
         }
 
-        private void ClearDays()
-        {
-            while (dateObjectsParent.childCount > 0)
-            {
-                var currentObject = dateObjectsParent.GetChild(0).gameObject;
-                DestroyImmediate(currentObject);
-            }
-        }
-        
         private void DeselectAllDates()
         {
             foreach (var selectedDate in GetComponentsInChildren<SelectedDate>())

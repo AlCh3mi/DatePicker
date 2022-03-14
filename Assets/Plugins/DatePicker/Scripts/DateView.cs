@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using UnityEngine;
 
 namespace Plugins.DatePicker.Scripts
 {
@@ -21,12 +22,6 @@ namespace Plugins.DatePicker.Scripts
         public void SetCulture(CultureInfo culture) => CultureInfo = culture;
 
         /// <summary>
-        /// returns specific Cultures for DateView,
-        /// see CultureInfo.GetCultures(CultureTypes.SpecificCultures)
-        /// </summary>
-        public static IEnumerable<CultureInfo> CultureInfos => CultureInfo.GetCultures(CultureTypes.SpecificCultures);
-
-        /// <summary>
         ///  returns the Days of the Week as a string Array in the selected Culture
         /// </summary>
         public string[] DaysOfTheWeek() => CultureInfo.DateTimeFormat.DayNames;
@@ -44,17 +39,39 @@ namespace Plugins.DatePicker.Scripts
         /// <summary>
         /// Invariant Culture version would look like: Thursday, 01 January 1970
         /// </summary>
-        public string ToFullDateAsString(DateTime dateTime) => dateTime.ToString("D", CultureInfo);
+        public string ToLongDate(DateTime dateTime) => dateTime.ToString("D", CultureInfo);
         
         /// <summary>
         /// Invariant Culture version would look like: January 01
         /// </summary>
-        public string ToShortDateAsString(DateTime dateTime) => dateTime.ToString("m", CultureInfo);
+        public string ToShortDate(DateTime dateTime) => dateTime.ToString("m", CultureInfo);
         
         /// <summary>
         /// Invariant Culture version would look like: 1970 January
         /// </summary>
         public string ToMonthOfYear(DateTime dateTime) => dateTime.ToString("Y", CultureInfo);
+        
+        /// <summary>
+        /// returns specific Cultures for DateView,
+        /// see CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+        /// </summary>
+        public static IEnumerable<CultureInfo> CultureInfos => CultureInfo.GetCultures(CultureTypes.SpecificCultures);
+
+        /// <summary>
+        /// Get Culture with cultureName eg. "en-GB" for English - Great Britain
+        /// </summary>
+        public static CultureInfo GetCulture(string cultureName)
+        {
+            try
+            {
+                return CultureInfo.GetCultureInfo(cultureName);
+            }
+            catch (CultureNotFoundException)
+            {
+                Debug.LogWarning("CultureNotFoundException: Invariant Culture Selected instead");
+                return CultureInfo.InvariantCulture;
+            }
+        }
 
         public override string ToString() => ToFormattedDate(DateTime.Now);
     }
