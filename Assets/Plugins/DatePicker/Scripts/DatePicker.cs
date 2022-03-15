@@ -9,23 +9,25 @@ namespace Plugins.DatePicker.Scripts
 {
     public class DatePicker : MonoBehaviour
     {
+        [SerializeField, HideInInspector] private TMP_Dropdown monthDropdown;
+        [SerializeField, HideInInspector] private TMP_Dropdown yearDropdown;
+        [SerializeField, HideInInspector] private RectTransform dateObjectsParent;
+        
         [SerializeField] private int minYear = 2022;
         [SerializeField] private int maxYear = 2030;
+        
+        [SerializeField] private GameObject dateObjectPrefab;
+        [SerializeField] private GameObject dudObjectPrefab;
         [SerializeField] private Color borderColor;
         [SerializeField] private Color fillColor;
         [SerializeField] private Color textColor;
-        
-        public UnityEvent<DateTime> dateSelected;
-        
-        [Header("Dependencies")]
-        [SerializeField] private TMP_Dropdown monthDropdown;
-        [SerializeField] private TMP_Dropdown yearDropdown;
-        [SerializeField] private RectTransform dateObjectsParent;
-        [SerializeField] private GameObject dateObjectPrefab;
-        [SerializeField] private GameObject dudObjectPrefab;
         [SerializeField] private Image[] borderColorComponents;
         [SerializeField] private Image[] fillColorComponents;
         [SerializeField] private TMP_Text[] textsToColor;
+        
+        [Space, SerializeField] private bool showDebugLogs = false;
+        
+        public UnityEvent<DateTime> dateSelected;
         
         private int SelectedMonth => monthDropdown.value + 1;
         private int SelectedYear => Convert.ToInt32(yearDropdown.options[yearDropdown.value].text);
@@ -33,6 +35,38 @@ namespace Plugins.DatePicker.Scripts
         private readonly Calendar calendar = Calendar.ReadOnly(new GregorianCalendar());
         
         public DateTime SelectedDate = DateTime.Today;
+
+        public int MinYear
+        {
+            get => minYear;
+            set
+            {
+                minYear = value;
+
+                if (minYear > MaxYear)
+                    minYear = MaxYear;
+            }
+        }
+
+        public int MaxYear
+        {
+            get => maxYear;
+            set
+            {
+                maxYear = value;
+
+                if (maxYear < minYear)
+                    maxYear = minYear;
+                
+            }
+        }
+
+        public void Populate()
+        {
+            PopulateYearList();
+            PopulateMonthList();
+            PopulateDayList(SelectedYear, SelectedMonth);
+        }
 
         private void ClearDays()
         {
@@ -42,7 +76,7 @@ namespace Plugins.DatePicker.Scripts
                 DestroyImmediate(currentObject);
             }
         }
-        
+
         private void PopulateYearList()
         {
             yearDropdown.ClearOptions();
@@ -136,7 +170,8 @@ namespace Plugins.DatePicker.Scripts
             SelectedDate = value;
             DeselectAllDates();
             dateSelected?.Invoke(value);
-            Debug.Log($"DateSelected : {value.ToShortDateString()}");
+            if(showDebugLogs)
+                Debug.Log($"DateSelected : {value.ToShortDateString()}");
         }
 
         private void CalculateSpacing()
@@ -179,31 +214,31 @@ namespace Plugins.DatePicker.Scripts
             }
         }
 
-        #region UnityFunctions
+        private void OnMonthChanged(int month) => PopulateDayList(SelectedYear, SelectedMonth);
+        
+        private void OnYearChanged(int year) => PopulateDayList(SelectedYear, SelectedMonth);
+
         private void OnEnable()
         {
             CalculateSpacing();
             
-            yearDropdown.onValueChanged.AddListener((_) => PopulateDayList(SelectedYear, SelectedMonth));
-            monthDropdown.onValueChanged.AddListener((_) => PopulateDayList(SelectedYear, SelectedMonth));
+            yearDropdown.onValueChanged.AddListener(OnYearChanged);
+            monthDropdown.onValueChanged.AddListener(OnMonthChanged);
         }
 
         private void Start()
         {
-            PopulateYearList();
-            SelectLowestYear();
+            Populate();
             
-            PopulateMonthList();
+            SelectLowestYear();
             SelectLowestMonth();
-
-            PopulateDayList(SelectedYear, SelectedMonth);
             SelectLowestDay();
         }
         
         private void OnDisable()
         {
-            yearDropdown.onValueChanged.RemoveAllListeners();
-            monthDropdown.onValueChanged.RemoveAllListeners();
+            yearDropdown.onValueChanged.RemoveListener(OnYearChanged);
+            monthDropdown.onValueChanged.RemoveListener(OnMonthChanged);
         }
         
         private void OnValidate()
@@ -216,6 +251,5 @@ namespace Plugins.DatePicker.Scripts
         }
 
         private void OnRectTransformDimensionsChange() => CalculateSpacing();
-        #endregion
     }
 }
